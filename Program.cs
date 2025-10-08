@@ -15,12 +15,10 @@ app.MapGet("/dni/{numero}", async (string numero) =>
     if (string.IsNullOrWhiteSpace(numero) || numero.Length != 8)
         return Results.BadRequest(new { error = "Número de DNI inválido" });
 
-    // Forma segura: usa la variable de entorno RENIEC_TOKEN.
-    // Si no la defines, reemplaza "TU_TOKEN_AQUI" por tu token directamente.
-    var token = Environment.GetEnvironmentVariable("RENIEC_TOKEN") ?? "sk_10792.UTfYBTEyypQwueA9l1paDeLBhou1CgJh";
+    var token = Environment.GetEnvironmentVariable("RENIEC_TOKEN");
 
     if (string.IsNullOrEmpty(token))
-        return Results.Problem("Token no configurado. Define RENIEC_TOKEN o coloca el token en el código.");
+        return Results.Problem("Token en Render");
 
     var url = $"https://api.decolecta.com/v1/reniec/dni?numero={numero}";
 
@@ -33,10 +31,10 @@ app.MapGet("/dni/{numero}", async (string numero) =>
         var response = await client.GetAsync(url);
         var content = await response.Content.ReadAsStringAsync();
 
-            if (!response.IsSuccessStatusCode)
-                return Results.Json(new { error = "Error en la consulta", detalle = content }, statusCode: (int)response.StatusCode);
+        if (!response.IsSuccessStatusCode)
+            return Results.Json(new { error = "Error en la consulta", detalle = content }, statusCode: (int)response.StatusCode);
 
-            return Results.Content(content, "application/json");
+        return Results.Content(content, "application/json");
     }
     catch (Exception ex)
     {
@@ -44,4 +42,6 @@ app.MapGet("/dni/{numero}", async (string numero) =>
     }
 });
 
-app.Run("http://0.0.0.0:5000");
+// Render usa el puerto que define la variable de entorno PORT
+var port = Environment.GetEnvironmentVariable("PORT") ?? "5000";
+app.Run($"http://0.0.0.0:{port}");
